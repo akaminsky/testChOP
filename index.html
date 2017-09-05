@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Document</title>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap-theme.min.css">
+  
+  <style>
+    .app {
+      padding: 20px 0;
+      color: #555;
+    }
+
+    .screen {
+      padding: 25px 15px 15px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      position: relative;
+    }
+
+    .screen-name {
+      position: absolute;
+      left: 0px;
+      top: -0.5em;
+      background: #fff;
+      padding: 0 15px;
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    .steps {
+      margin-bottom: 40px;
+    }
+
+    .group-label {
+      font-size: 15px;
+      font-weight: bold;
+    }
+    .group-label.bigger {
+      font-size: 18px;
+    }
+
+    .group-label .help-block {
+      font-size: 14px;
+      font-weight: normal;
+      margin-top: 0;
+    }
+
+    .form-control-inline {
+      display: inline-block;
+      width: auto;
+    }
+
+    .group-header {
+      margin-bottom: 15px;
+    }
+
+    .group-header.show {
+      border-bottom:  1px solid #ccc;
+      padding-bottom: 10px;
+    }
+
+    a {
+      color: #0af;
+    }
+
+    .field-error-message {
+      font-size: 12px;
+      color: red;
+    }
+    </style>
+</head>
+<body>
+
+  <div ng-app="app" class="app" ng-cloak>
+    <div ng-controller="ctrl as $ctrl">
+      <div class="container">
+        
+
+        <div class="steps">
+          <label class="radio-inline">
+            <input type="radio" ng-value="1" ng-model="$ctrl.step">
+            Policy
+          </label>
+          <label class="radio-inline">
+            <input type="radio" ng-value="2" ng-model="$ctrl.step">
+            Occupancy
+          </label>
+          <label class="radio-inline">
+            <input type="radio" ng-value="3" ng-model="$ctrl.step">
+            Rates
+          </label>
+        </div>
+        
+
+        <!-- Policy -->
+        <div ng-show="$ctrl.step === 1">
+          <div class="screen">
+            <div class="screen-name">Policy</div>
+            <form name="$ctrl.policyForm">
+              
+              <div class="form-group">
+                <div class="group-label">Do you allow children at your property?</div>
+                <div>
+                  <label class="radio-inline">
+                    <input type="radio" ng-value="true" ng-model="$ctrl.policy.allow">
+                    Yes
+                  </label>
+                  <label class="radio-inline">
+                    <input type="radio" ng-value="false" ng-model="$ctrl.policy.allow">
+                    No
+                  </label>
+                </div>
+              </div>
+
+              <!-- Age Range -->
+              <div class="form-group" ng-show="$ctrl.policy.allow">
+                <div class="group-label">What is the age range of children allowed to stay at your property?</div>
+                <div class="row">
+                  <div class="col-sm-12">
+                    <div style="display: inline-block; vertical-align: top;">
+                    <select
+                      class="form-control form-control-inline"
+                      name="minAge"
+                      ng-options="opt for opt in $ctrl.range(0, 17)"
+                      ng-model="$ctrl.policy.minAge"
+                      ng-required="true"
+                    ></select>
+                    </div>
+                  
+                    <div style="display: inline-block; padding: 8px 0;">
+                      through
+                    </div>
+
+                    <div style="display: inline-block; vertical-align: top;">
+                      <select
+                        class="form-control form-control-inline"
+                        name="maxAge"
+                        ng-options="opt for opt in $ctrl.range($ctrl.policy.minAge, 17)"
+                        ng-model="$ctrl.policy.maxAge"
+                        ng-required="true"
+                        ng-min="1"
+                      ></select>
+
+                      <div
+                        class="field-error-message"
+                        ng-messages="$ctrl.policyForm.maxAge.$error"
+                      >
+                        <div ng-message="required">required</div>
+                        <div ng-message="upsidedown">upsidedown</div>
+                        <div ng-message="overlap">overlap</div>
+                      </div>
+
+                    </div>
+
+                  </div>
+                </div>
+
+                <div class="help-block">
+                  Guests {{$ctrl.policy.maxAge + 1}} years and older will be considered as adults.<br/>
+                  <div ng-show="$ctrl.policy.minAge > 1">
+                    Guests {{$ctrl.policy.minAge - 1}} years and under will not be allowed to stay at your property.
+                  </div>
+                  <div ng-show="$ctrl.policy.minAge === 1">
+                    Children younger than 1 yo are not allowed
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- Advanced -->
+              <div ng-show="$ctrl.policy.allow && ($ctrl.policy.minAge !== $ctrl.policy.maxAge)">
+                
+                <div 
+                  class="group-header h3" 
+                  ng-class="{show: $ctrl.policy.showAdvanced}" 
+                  ng-click="$ctrl.policy.showAdvanced = !$ctrl.policy.showAdvanced"
+                >
+                  Advanced Settings (optional)
+                  <span class="pull-right">
+                    <span class="glyphicon" ng-class="{
+                      'glyphicon-chevron-up': $ctrl.policy.showAdvanced,
+                      'glyphicon-chevron-down': !$ctrl.policy.showAdvanced
+                    }" aria-hidden="true"></span>
+                  </span>
+                </div>
+
+                <div ng-show="$ctrl.policy.showAdvanced" ng-form name="advanced">
+
+                  <div class="group-label">
+                    Do you have different rates or occupancy rules based on children ages?
+                    <div class="help-block">
+                      For example, 0-2 year olds are free but older children have an additional cost.
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label class="radio-inline">
+                      <input type="radio" ng-value="true" ng-model="$ctrl.policy.advanced">
+                      Yes
+                    </label>
+                    <label class="radio-inline">
+                      <input type="radio" ng-value="false" ng-model="$ctrl.policy.advanced">
+                      No
+                    </label>
+                  </div>
+
+                  <div ng-show="$ctrl.policy.advanced">
+                    <br>
+                    <div class="group-label">
+                      Define the age ranges rules for children:
+                      <div class="help-block">
+                        Once the age ranges are defined, set up occupancy configuration in <a href="">Room Details</a> and rates in <a href="">Rate Categories</a>.
+                      </div>
+                    </div>
+
+                    <div class="well">
+                      <div class="form-group" ng-repeat="band in $ctrl.policy.bands">
+                        <div class="row">
+                          
+                          <div class="col-xs-5">
+                            <div class="group-label">Age range</div>
+                            <div style="display: inline-block; vertical-align: top;">
+                              <select 
+                                class="form-control form-control-inline"
+                                name="bands[{{$index}}].from"
+                                ng-model="band.from"
+                                ng-options="opt for opt in $ctrl.range($ctrl.policy.minAge, $ctrl.policy.maxAge)"
+                                ng-required="$ctrl.policy.advanced"
+                              ></select>
+
+                              <div
+                                class="field-error-message"
+                                ng-messages="$ctrl.policyForm.advanced['bands[' + $index + '].from'].$error"
+                              >
+                                <div ng-message="required">required</div>
+                                <div ng-message="upsidedown">upsidedown</div>
+                                <div ng-message="overlap">overlap</div>
+                              </div>
+
+                            </div>
+
+                            <div style="display: inline-block; padding: 8px 0;">
+                              through
+                            </div>
+
+                            <div style="display: inline-block; vertical-align: top;">
+                              <select 
+                                class="form-control form-control-inline"
+                                name="bands[{{$index}}].to"
+                                ng-model="band.to"
+                                ng-options="opt for opt in $ctrl.range($ctrl.policy.minAge, $ctrl.policy.maxAge)"
+                                ng-required="$ctrl.policy.advanced"
+                              ></select>
+
+                              <div
+                                class="field-error-message"
+                                ng-messages="$ctrl.policyForm.advanced['bands[' + $index + '].to'].$error"
+                              >
+                                <div ng-message="required">required</div>
+                                <div ng-message="upsidedown">upsidedown</div>
+                                <div ng-message="overlap">overlap</div>
+                              </div>
+
+                            </div>
+                          </div>
+
+                          <div class="col-xs-6">
+                            <div class="group-label">Custom name (optional)</div>
+                            <input 
+                              class="form-control"
+                              type="text"
+                              name="band[{{$index}}].label"
+                              ng-model="band.label" />
+                          </div>
+
+                          <div class="col-xs-1">
+                            <div class="group-label">&nbsp;</div>
+                            <button
+                              ng-if="$ctrl.policy.bands.length > 2 || ($ctrl.policy.bands.length === 2 && $ctrl.policy.maxAge === $ctrl.policy.minAge)"
+                              class="btn btn-sm btn-default"
+                              ng-click="$ctrl.removeBand($index)"
+                            ><span class="glyphicon glyphicon-minus" aria-hidden="true"></span> </button>
+                          </div>
+
+                        </div>
+                      </div>
+                      <button
+                        ng-if="$ctrl.canAddBand()"
+                        class="btn btn-success"
+                        ng-click="$ctrl.addBand()"
+                      ><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Add another range</button>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+            </form>
+
+          </div>
+
+          <br>
+
+          <div class="text-right pull-right">
+            <button 
+              class="btn btn-default" 
+              ng-disabled="$ctrl.policy.advanced && $ctrl.policyForm.advanced.$invalid || $ctrl.policyForm.maxAge.$invalid" 
+              ng-click="$ctrl.step = 2"
+            >Next Step (Occupancy)</button>
+          </div>
+          
+        </div>
+        
+        <!-- Room Occupancy -->
+        <div ng-show="$ctrl.step === 2">
+          <div class="screen">
+            <div class="screen-name">Occupancy</div>
+
+            <form name="$ctrl.occupancyForm">
+
+              <p>Your configuration will determine how we display and recommend your room to guests on the Booking.com website.</p>
+
+              <div class="row">
+                <div class="col-xs-5">
+                  <div class="form-group">
+                    <div class="group-label">Room name</div>
+                    <input type="text" class="form-control" ng-model="$ctrl.occupancy.name">
+                  </div>
+
+                  <div class="form-group">
+                    <div class="group-label">
+                      How many guests can stay in this room?
+                    </div>
+                    <div>
+                      <select 
+                        class="form-control"
+                        ng-options="opt for opt in $ctrl.range(1, 5)"
+                        ng-model="$ctrl.occupancy.capacity"
+                        name="capacity"
+                        required
+                      ></select>
+                    </div>
+                    <div class="help-block">This is maximum number of guests without adding extra beds or cribs.</div>
+                  </div>
+
+                  <div class="form-group">
+                    <div class="group-label">How many adults ({{$ctrl.policy.maxAge + 1 }}+) can stay?</div>
+                    <select 
+                      class="form-control"
+                      ng-options="opt for opt in $ctrl.range(1, $ctrl.occupancy.capacity)"
+                      ng-model="$ctrl.occupancy.adults"
+                      name="adults"
+                      required
+                    ></select>
+                    <div
+                      class="field-error-message"
+                      ng-messages="$ctrl.occupancyForm.adults.$error"
+                    >
+                      <div ng-message="required">required</div>
+                    </div>
+                  </div>
+
+                  <div class="form-group" ng-if="$ctrl.occupancy.capacity > 1 && $ctrl.policy.allow">
+                    <div class="group-label">How many children ({{$ctrl.policy.minAge}} - {{$ctrl.policy.maxAge}}) can stay?</div>
+                    <select 
+                      class="form-control"
+                      ng-options="opt for opt in $ctrl.range(0, $ctrl.occupancy.capacity - $ctrl.occupancy.minAdults)"
+                      ng-model="$ctrl.occupancy.children"
+                      name="children"
+                      required
+                    ></select>
+                    <div
+                      class="field-error-message"
+                      ng-messages="$ctrl.occupancyForm.children.$error"
+                    >
+                      <div ng-message="required">required</div>
+                    </div>
+                  </div>
+
+                </div>
+
+                <div class="col-xs-5 col-xs-offset-2">
+                  <div ng-show="$ctrl.occupancyForm.$valid" class="well">
+                    <div class="group-label">This room allows:</div>
+                    <br>
+                    <div ng-repeat="row in $ctrl.occupancyTable">
+                      <div style="display: inline-block; width: 250px;">
+                        {{row.adults}} adults 
+                        <span ng-if="row.children">+ {{row.children}} children</span>
+                      </div>
+                      <div style="display: inline-block; width: 140px;">
+                        <span 
+                          class="glyphicon glyphicon-user" 
+                          ng-repeat="i in $ctrl.range(1, row.adults)" 
+                        ></span>
+                        &nbsp;
+                        <span ng-repeat="i in $ctrl.range(1, row.children)" style="display: inline-block; width: 14px;">
+                          <span class="glyphicon glyphicon-user" style="font-size: 11px;"></span>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+
+              <div
+                class="group-header h3" 
+                ng-class="{show: $ctrl.occupancy.showAdvanced}" 
+                ng-click="$ctrl.occupancy.showAdvanced = !$ctrl.occupancy.showAdvanced"
+              >
+                More options (optional)
+                <span class="pull-right">
+                  <span class="glyphicon" ng-class="{
+                    'glyphicon-chevron-up': $ctrl.occupancy.showAdvanced,
+                    'glyphicon-chevron-down': !$ctrl.occupancy.showAdvanced
+                  }" aria-hidden="true"></span>
+                </span>
+              </div>
+
+              <div class="row">
+                <div ng-show="$ctrl.occupancy.showAdvanced" class="col-xs-5">
+
+                  <div class="form-group">
+                    <div class="group-label bigger">
+                      Adult Options
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <div class="group-label">How many adults are required in the room?</div>
+                    <select 
+                      class="form-control"
+                      ng-options="opt for opt in $ctrl.range(1, $ctrl.occupancy.adults)"
+                      ng-model="$ctrl.occupancy.minAdults"
+                      name="minAdults"
+                      required
+                    ></select>
+                    <div
+                      class="field-error-message"
+                      ng-messages="$ctrl.occupancyForm.minAdults.$error"
+                    >
+                      <div ng-message="required">required</div>
+                    </div>
+
+                  </div>
+
+                  <div ng-if="$ctrl.policy.allow && $ctrl.occupancy.children > 0">
+
+                    <div class="form-group">
+                      <div class="group-label bigger">
+                        Children Options
+                      </div>
+                    </div>
+
+                    <div class="form-group" ng-if="$ctrl.occupancy.capacity > 1 && $ctrl.occupancy.children > 0">
+                      <div class="group-label">How many children are required in the room?</div>
+                      <select 
+                        class="form-control"
+                        ng-options="opt for opt in $ctrl.range(0, $ctrl.occupancy.children)"
+                        ng-model="$ctrl.occupancy.minChildren"
+                        name="minChildren"
+                        ng-required="$ctrl.occupancy.children"
+                      ></select>
+                      <div
+                        class="field-error-message"
+                        ng-messages="$ctrl.occupancyForm.minChildren.$error"
+                      >
+                        <div ng-message="required">required</div>
+                      </div>
+                    </div>
+
+                  </div>
+
+                </div>
+              </div>
+
+              <div ng-if="$ctrl.policy.allow && $ctrl.occupancy.children > 0 && $ctrl.policy.advanced">
+
+                <div class="form-group">
+                  <div class="group-label">Do you differentiate how many children can stay in the room based on child's age?</div>
+                  <div>
+                    <label class="radio-inline">
+                      <input type="radio" ng-value="true" ng-model="$ctrl.occupancy.different">
+                      Yes
+                    </label>
+                    <label class="radio-inline">
+                      <input type="radio" ng-value="false" ng-model="$ctrl.occupancy.different">
+                      No
+                    </label>
+                  </div>
+                </div>
+
+                <div class="row" ng-if="$ctrl.occupancy.different">
+                  <div class="col-xs-5">
+
+                      <div
+                        class="form-group" 
+                        ng-repeat="band in $ctrl.policy.bands"
+                        ng-init="occupancyBand = $ctrl.occupancyBandById(band.id);"
+                      >
+                        <div class="group-label">
+                          {{band.label}} 
+                          ({{band.from}} - {{band.to}})
+                        </div>
+                        <select 
+                          class="form-control"
+                          ng-options="opt for opt in $ctrl.range(0, $ctrl.occupancy.children)"
+                          ng-model="occupancyBand.max"
+                          name="occBand_{{occupancyBand.bandId}}"
+                          required
+                        ></select>
+                        <div
+                          class="field-error-message"
+                          ng-messages="$ctrl.occupancyForm['occBand_' + occupancyBand.bandId].$error"
+                        >
+                          <div ng-message="required">required</div>
+                        </div>
+                      </div>
+
+                  </div>
+                </div>
+
+              </div>
+
+            </form>
+
+          </div>
+
+          <br>
+
+          <div class="text-right pull-right">
+            <button 
+              class="btn btn-default" 
+              ng-disabled="$ctrl.occupancyForm.$invalid" 
+              ng-click="$ctrl.step = 3"
+            >Next Step (Rates)</button>
+          </div>
+          
+          <div>
+            <button class="btn btn-default" ng-click="$ctrl.step = 1">Back (Policy)</button>
+          </div>
+
+        </div>
+
+        <!-- Rates -->
+        <div ng-show="$ctrl.step === 3">
+          <div class="screen">
+            <div class="screen-name">Rates</div>
+
+            <div class="form-group">
+              <div class="group-label">What's the name of your rate category?</div>
+              <input type="text" class="form-control">
+              <div class="help-block">This name is just for you.</div>
+            </div>
+
+            <div class="form-group">
+              <div class="group-label">How do you want to manage your rates?</div>
+              <div>
+                <div>
+                  <label class="radio-inline">
+                    <input type="radio" value="1" name="how">
+                    Manually
+                  </label>
+                </div>
+                <div>
+                  <label class="radio-inline">
+                    <input type="radio" value="2" name="how">
+                    Automatically
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <div class="group-label">Which room types?</div>
+              <div>
+                <div ng-repeat="room in $ctrl.rooms">
+                  <label class="checkbox-inline">
+                    <input type="checkbox" value="1" name="roomTypes" ng-model="room.selected">
+                    {{room.name}}
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group" ng-if="$ctrl.selectedRooms().length > 0">
+              <div class="group-label">Different prices depending on how many guests stay in the room?</div>
+              <div>
+                <div class="row">
+                  <div class="col-xs-3">
+                    <div class="group-label">Room Type</div>
+                  </div>
+                  <div class="col-xs-3">
+                    <div class="group-label">Base price is for</div>
+                  </div>
+                  <div class="col-xs-3">
+                    <div class="group-label">Max. Aduls</div>
+                  </div>
+                  <div class="col-xs-3">
+                    <div class="group-label">Room Capacity</div>
+                  </div>
+                </div>
+                <div class="row" ng-repeat="room in $ctrl.selectedRooms()">
+                  <div class="col-xs-3">
+                    <label class="checkbox-inline">
+                      <input type="checkbox" ng-model="room.differentBase"> {{room.name}}
+                    </label>
+                  </div>
+                  <div class="col-xs-3">
+                    <select class="form-control form-control-inline" ng-options="opt for opt in $ctrl.range(room.minAdults, room.adults)" ng-model="room.baseFor"></select>
+                    adult(s)
+                  </div>
+                  <div class="col-xs-3">
+                    {{room.adults}} adults
+                  </div>
+                  <div class="col-xs-3">
+                    {{room.capacity}} guests
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group" ng-if="$ctrl.diffBaseRooms().length > 0">
+              <div class="group-label">What is charge for each Adult?</div>
+              <div class="row">
+                <div class="col-xs-3">
+                  <div ng-if="$ctrl.diffBaseRooms().length > 1">All rooms</div>
+                  <div ng-if="$ctrl.diffBaseRooms().length == 1">{{$ctrl.diffBaseRooms()[0].name}}</div>
+                </div>
+                <div class="col-xs-3">
+                  <input class="form-control form-control-inline" type="text" value="0" ng-disabled="$ctrl.rate.chargeAdults">
+                  <select class="form-control form-control-inline" ng-disabled="$ctrl.rate.chargeAdults">
+                    <option value="">%</option>
+                    <option value="">$</option>
+                  </select>
+                </div>
+              </div>
+              <div ng-if="$ctrl.diffBaseRooms().length > 1">
+                
+                <div ng-click="$ctrl.rate.chargeAdults = !$ctrl.rate.chargeAdults">Set charge for each room</div>
+                
+                <div class="row" ng-repeat="room in $ctrl.diffBaseRooms()" ng-if="$ctrl.rate.chargeAdults">
+                  <div class="col-xs-3">
+                    {{room.name}}
+                  </div>
+                  <div class="col-xs-3">
+                    <input class="form-control form-control-inline" type="text" value="0">
+                    <select class="form-control form-control-inline">
+                      <option value="">%</option>
+                      <option value="">$</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group" ng-if="$ctrl.diffBaseRooms().length > 0">
+              <div class="group-label">What is charge for each Child?</div>
+              <div class="row">
+                <div class="col-xs-3">
+                  <div ng-if="$ctrl.diffBaseRooms().length > 1">All rooms</div>
+                  <div ng-if="$ctrl.diffBaseRooms().length == 1">{{$ctrl.diffBaseRooms()[0].name}}</div>
+                </div>
+
+                <div class="col-xs-3" ng-if="!$ctrl.policy.advanced">
+                  <input class="form-control form-control-inline" type="text" value="0">
+                  <select class="form-control form-control-inline">
+                    <option value="">%</option>
+                    <option value="">$</option>
+                  </select>
+                </div>
+
+                <div class="col-xs-3" ng-repeat="band in $ctrl.policy.bands" ng-if="$ctrl.policy.advanced">
+                  <div class="group-label">
+                    {{band.label}} 
+                    ({{band.from}} - {{band.to}})
+                  </div>
+                  <input class="form-control form-control-inline" type="text" value="0" ng-disabled="$ctrl.rate.chargeChildren">
+                  <select class="form-control form-control-inline" ng-disabled="$ctrl.rate.chargeChildren">
+                    <option value="">%</option>
+                    <option value="">$</option>
+                  </select>
+                </div>
+              </div>
+              <div ng-if="$ctrl.diffBaseRooms().length > 1">
+                
+                <div ng-click="$ctrl.rate.chargeChildren = !$ctrl.rate.chargeChildren">Set charge for each room</div>
+                
+                <div class="row" ng-repeat="room in $ctrl.diffBaseRooms()" ng-if="$ctrl.rate.chargeChildren">
+                  <div class="col-xs-3">
+                    {{room.name}}
+                  </div>
+
+                  <div class="col-xs-3" ng-if="!$ctrl.policy.advanced">
+                    <input class="form-control form-control-inline" type="text" value="0">
+                    <select class="form-control form-control-inline">
+                      <option value="">%</option>
+                      <option value="">$</option>
+                    </select>
+                  </div>
+
+
+                  <div class="col-xs-3" ng-repeat="band in $ctrl.policy.bands" ng-if="$ctrl.policy.advanced">
+                    <div class="group-label">
+                      {{band.label}} 
+                      ({{band.from}} - {{band.to}})
+                    </div>
+                    <input class="form-control form-control-inline" type="text" value="0">
+                    <select class="form-control form-control-inline">
+                      <option value="">%</option>
+                      <option value="">$</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <br>
+
+          <div>
+            <button class="btn btn-default" ng-click="$ctrl.step = 2">Back (Occupancy)</button>
+          </div>
+        </div>
+
+        <br>
+        <br>
+
+
+      </div>
+    </div>    
+  </div>
+  
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.6.5/angular.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-messages/1.6.6/angular-messages.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+  <script>
+    angular.module('app', ['ngMessages'])
+      .controller('ctrl', ['$scope', Ctrl])
+
+    function Ctrl($scope){
+
+      this.step = 1;
+
+      corrected = false;
+
+      this.policy = {
+        allow: true,
+        minAge: 0,
+        maxAge: 17,
+        advanced: false,
+        showAdvanced: false,
+        bands: [{
+          id: id(),
+          label: '',
+          from: 0,
+          to: 2
+        }, {
+          id: id(),
+          label: '',
+          from: 3,
+          to: 17
+        }]
+      }
+
+      this.occupancy = {
+        name: 'New Room',
+        selected: false,
+        capacity: 4,
+        adults: 4,
+        children: 3,
+        showAdvanced: false,
+        minAdults: 1,
+        minChildren: 0,
+        different: false,
+        baseFor: 1,
+        differentBase: false,
+        bands: this.policy.bands.map(band => ({
+          bandId: band.id,
+          max: 1
+        }))
+      }
+
+      this.fakeRoom = {
+        name: 'Fake Room',
+        selected: false,
+        capacity: 3,
+        adults: 2,
+        children: 2,
+        minAdults: 1,
+        minChildren: 0,
+        baseFor: 1,
+        differentBase: false
+      }
+
+      this.rooms = [
+        this.fakeRoom,
+        this.occupancy
+      ]
+
+      this.rate = {
+        name: '',
+        roomTypes: [],
+        chargeAdults: false,
+        chargeChildren: false
+      }
+
+      this.selectedRooms = function(){
+        return this.rooms.filter(room => room.selected);
+      }
+
+      this.diffBaseRooms = function(){
+        return this.rooms.filter(room => room.differentBase);
+      }
+
+      this.occupancyBandById = function(id){
+        return this.occupancy.bands.find(band => band.bandId === id);
+      }
+
+      this.policyBandById = function(id){
+        return this.policy.bands.find(band => band.id === id);
+      }
+
+      $scope.$watch(() => {
+        return this.policy.bands
+          .map(({from, to}) => [from, to])
+          .concat([this.policy.advanced, this.policy.minAge, this.policy.maxAge])
+      }, () => {
+        this.validateBands();
+      }, true);
+
+      $scope.$watch(() => {
+        return this.step;
+      }, () => {
+        sortBands();
+      })
+
+      $scope.$watch(() => {
+        return this.policy.advanced;
+      }, (newVal, oldVal) => {
+        if (newVal) {
+          correctBands();
+        }
+      })
+
+      this.validateBands = () => {
+        if (!this.policy.advanced) return;
+
+        this.policy.bands.forEach((band, i) => {
+          var modelFrom = this.policyForm.advanced['bands['+ i +'].from'];
+          var modelTo = this.policyForm.advanced['bands['+ i +'].to'];
+
+          if (band.from == null || band.to == null) return;
+
+          if (modelFrom) {
+            modelFrom.$setValidity('upsidedown', band.from <= band.to);
+          }
+
+          if (modelFrom) {
+            modelTo.$setValidity('upsidedown', band.from <= band.to);
+
+            modelTo.$setValidity('overlap', this.policy.bands.every((other, j) => {
+              if (i === j) return true;
+
+              if(band.to == null || band.from == null || other.to == null || other.from == null) return true;
+
+              return other.from > band.to || other.to < band.from;
+            }));
+          }
+        })
+      }
+
+      this.removeBand = function(index){
+        var deleted = this.policy.bands.splice(index, 1)[0];
+        this.occupancy.bands = this.occupancy.bands.filter(band => {
+          return band.bandId !== deleted.id
+        })
+      }
+
+      this.addBand = function(){
+        var max = this.policy.bands.reduce((maxToBand, band) => {
+          if (band.to > maxToBand.to) maxToBand = band;
+          return maxToBand;
+        });
+
+        var minAge = this.policy.minAge;
+        var maxAge = this.policy.maxAge;
+
+        var newBand = {
+          id: id(),
+          from: null,
+          to: null,
+          label: ''
+        };
+
+        sortBands();
+        this.policy.bands.push(newBand);
+        this.occupancy.bands.push({
+          bandId: newBand.id,
+          max: 0
+        })
+
+      }
+
+      this.canAddBand = function(){
+        if (this.policyForm.$invalid) return false;
+
+        var bands = this.policy.bands.slice(0).sort((a,b) => a.from - b.from);
+
+        return !(
+          bands[0].from === this.policy.minAge && 
+          bands[bands.length - 1].to === this.policy.maxAge && 
+          bands.slice(1).every((band, i) => band.from === bands[i].to + 1)
+        );
+        
+      }
+
+      this.range = function(from, to) {
+        if (angular.isUndefined(from) || angular.isUndefined(to)) return [];
+        return Array(to - from + 1).fill(1).map((el, i) => i + from)
+      }
+
+      this.occupancyTable = [];
+
+      $scope.$watch(() => {
+        return [this.policy.allow, this.occupancy.capacity, this.occupancy.adults, this.occupancy.children, this.occupancy.minAdults, this.occupancy.minChildren];
+      }, () => {
+        this.occupancyTable = generateOccupancyTable(this.occupancy);
+      }, true)
+
+      generateOccupancyTable = (room) => {
+        var table = [];
+
+        var max = Math.min(room.capacity, room.adults + room.children);
+
+        for (var a = room.adults; a >= room.minAdults ; a--) {
+          var adults = a;
+          var children = Math.min(max - adults, room.children);
+
+          if (children < room.minChildren || !this.policy.allow) {
+            table.push({
+              adults: adults,
+              children: 0
+            })
+          } else {
+            for (var ch = room.minChildren; ch <= children; ch++) {
+              table.push({
+                adults: adults,
+                children: ch
+              })
+            }
+          }
+        }
+
+        return table;
+      }
+
+      const sortBands = () => {
+        this.policy.bands.sort((a,b) => a.from - b.from);
+      }
+
+      const correctBands = () => {
+        if (this.policy.bands.find(band => {
+          return band.from == null || band.to == null;
+        })) {
+
+          const from = this.policy.minAge;
+          const to = this.policy.maxAge;
+
+          let possibleBands = to - from + 1;
+
+          if (possibleBands > 1 && possibleBands < this.policy.bands.length) {
+            this.policy.bands = this.policy.bands.slice(0, possibleBands);
+          }
+
+          let bandSize = (to - from)/this.policy.bands.length;
+
+          this.policy.bands.forEach((band, i) => {
+            band.from = i == 0 ? from : this.policy.bands[i - 1].to + 1;
+            band.to = from + Math.floor(bandSize * (i + 1));
+          })
+        }
+      }
+
+      function id(){
+        return parseInt(Math.random() * 100000, 10);
+      }
+
+    }
+  </script>
+
+</body>
+</html>
